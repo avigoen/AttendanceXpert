@@ -1,0 +1,61 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-image: url('https://myanmarstudyabroad.org/wp-content/uploads/2022/04/campus-221.png');
+    background-size: cover;
+    background-position: center;
+}
+
+.container-main {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1;
+}
+
+.fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.frame-container {
+    border-radius: 20px;
+    padding: 0px;
+    /* background-color: red; */
+    margin: 0px 10px 10px 10px;
+    min-height: 300px;
+    display: flex;
+    justify-content: center;
+}
+
+.frame-container-content {
+    border-radius: 20px;
+    margin: 10px;
+}
+
+.submit-button {
+    min-width: 400px;
+    padding: 20px;
+    font-size: 20px;
+    background-color: red;
+    border-color: red;
+}
+
+.submit-button:hover {
+    background-color: green;
+    border-color: green;
+}
+
+.submit-button:focus {
+    background-color: red;
+    border-color: red;
+}
