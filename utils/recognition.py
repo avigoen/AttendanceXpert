@@ -1,42 +1,44 @@
-import torch, json
-import torchvision.transforms as transforms
-from PIL import Image
-from utils.Models.resnet import ResnetModel
+import face_recognition, pickle
+import numpy as np
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-TRANSFORM = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-    ]
-)
+known_face_encoding = None
+with open("static/embeddings.pkl", "rb") as f:
+    known_face_encoding = pickle.load(f)
 
-labels = None
-with open("static/labels.json", "r") as f:
-    data = json.load(f)
-    labels = {int(k): v for k, v in data.items()}
+known_faces_names = None
+with open("static/labels.pkl", "rb") as f1:
+    known_faces_names = pickle.load(f1)
 
 
-def _get_model():
-    model_resnet = ResnetModel(119, device)
-    model_resnet.setup(0.001)
-    model_resnet.load_state_dict(torch.load("outputs/V2/resnet_classifier.pth"))
-    return model_resnet.cnn.eval()
+def _detect_person_v2(frame):
+    face_locations = face_recognition.face_locations(frame)
+    face_encodings = face_recognition.face_encodings(frame, face_locations)
+    face_names = []
+    outputs = []
+    for face_encoding in face_encodings:
+        matches = face_recognition.compare_faces(known_face_encoding, face_encoding)
+        face_distance = face_recognition.face_distance(
+            known_face_encoding, face_encoding
+        )
+        best_match_index = np.argmin(face_distance)
+        name = known_faces_names[best_match_index] if matches[best_match_index] else ""
+        print(name, best_match_index)
+        if name in known_faces_names:
+            if best_match_index not in face_names:
+                face_names.append(best_match_index)
+                outputs.append(
+                    {
+                        "index": len(outputs),
+                        "label": face_names[-1],
+                        "name": known_faces_names[face_names[-1]],
+                    }
+                )
 
-FACE_MODEL = _get_model()
+    if not len(outputs):
+        outputs.append({"index": -1, "label": -1, "name": "Unknown"})
 
-def recognise(faces):
-    # model = _get_model()
-    identities = []
-    for idx, face in enumerate(faces):
-        img = Image.fromarray(face)
-        img = TRANSFORM(img)
-        img = img.unsqueeze(0)
-        img = img.to(device)
-        output = FACE_MODEL(img)
-        _, label = output.max(1)
-        output = label.item()
-        name = labels[output]
-        identities.append({"index": idx, "label": output, 'name': name})
-    return identities
+    return outputs
+
+
+def recognise_v2(image):
+    return _detect_person_v2(image)
